@@ -39,16 +39,16 @@ public class Plugin extends JavaPlugin implements Listener {
     private final Set<String> blacklistNames = new HashSet<>();
     private File whitelistFile;
     private File blacklistFile;
-    private int joinThreshold = 5; // conexiones por minuto
-    private int blockDurationSeconds = 60; // duración del bloqueo
+    private int joinThreshold = 5;
+    private int blockDurationSeconds = 60;
     private final Map<String, Long> ipBlockExpiry = new HashMap<>();
     private boolean antiVpnEnabled = true;
-    private final String githubApiUrl = "https://api.github.com/repos/Alcraft2020/firegurad/releases/latest"; // Reemplaza <TU_USUARIO> y <TU_REPO>
-    private final String pluginJarName = "fireguard-0.1.jar"; // Cambia si tu .jar tiene otro nombre
+    private final String githubApiUrl = "https://api.github.com/repos/Alcraft2020/fireguard/releases/latest";
+    private final String pluginJarName = "fireguard-0.1.jar";
 
     @Override
     public void onEnable() {
-        LOGGER.info("FireGuard successfully enabled. Thanks for using FireGuard!");
+        LOGGER.info("FireGuard successfully enabled.");
         getServer().getPluginManager().registerEvents(this, this);
         saveDefaultConfig();
         joinThreshold = getConfig().getInt("join-threshold", 5);
@@ -58,12 +58,10 @@ public class Plugin extends JavaPlugin implements Listener {
         blacklistFile = new File(getDataFolder(), "blacklist.json");
         loadWhitelist();
         loadBlacklist();
-        // Registrar comandos usando CommandExecutor
         getCommand("fireguard").setExecutor(new FireGuardCommandExecutor());
         checkForUpdate();
     }
 
-    // CommandExecutor para fireguard
     private class FireGuardCommandExecutor implements org.bukkit.command.CommandExecutor {
         @Override
         public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
@@ -72,14 +70,14 @@ public class Plugin extends JavaPlugin implements Listener {
                 if (sender.hasPermission("fireguard.whitelist") || !(sender instanceof Player)) {
                     whitelistIps.add(ip);
                     saveWhitelist();
-                    sender.sendMessage(ChatColor.GREEN + "IP " + ip + " añadida a la lista blanca de FireGuard.");
+                    sender.sendMessage(ChatColor.GREEN + "IP " + ip + " added to FireGuard whitelist.");
                 } else {
-                    sender.sendMessage(ChatColor.RED + "No tienes permiso para usar este comando.");
+                    sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
                 }
                 return true;
             } else if (args.length == 2 && args[0].equalsIgnoreCase("blacklist")) {
                 if (!sender.hasPermission("fireguard.blacklist") && sender instanceof Player) {
-                    sender.sendMessage(ChatColor.RED + "No tienes permiso para usar este comando.");
+                    sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
                     return true;
                 }
                 Player target = Bukkit.getPlayer(args[1]);
@@ -91,46 +89,45 @@ public class Plugin extends JavaPlugin implements Listener {
                     if (!ip.isEmpty()) blacklistIps.add(ip);
                     blacklistNames.add(name);
                     saveBlacklist();
-                    sender.sendMessage(ChatColor.RED + "Usuario " + name + " (" + ip + ") añadido a la blacklist de FireGuard.");
+                    sender.sendMessage(ChatColor.RED + "User " + name + " (" + ip + ") added to FireGuard blacklist.");
                 } else {
-                    // Jugador offline: añade solo el nombre
                     String name = args[1];
                     blacklistNames.add(name);
                     saveBlacklist();
-                    sender.sendMessage(ChatColor.RED + "Usuario offline " + name + " añadido a la blacklist de FireGuard (solo por nombre). Si se conecta, se añadirá su IP y UUID automáticamente.");
+                    sender.sendMessage(ChatColor.RED + "Offline user " + name + " added to FireGuard blacklist (name only). If they join, their IP and UUID will be added automatically.");
                 }
                 return true;
             } else if (args.length == 2 && args[0].equalsIgnoreCase("antivpn")) {
                 if (!sender.hasPermission("fireguard.antivpn")) {
-                    sender.sendMessage(ChatColor.RED + "No tienes permiso para usar este comando.");
+                    sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
                     return true;
                 }
                 if (args[1].equalsIgnoreCase("on")) {
                     antiVpnEnabled = true;
                     getConfig().set("antivpn-enabled", true);
                     saveConfig();
-                    sender.sendMessage(ChatColor.GREEN + "AntiVPN habilitado.");
+                    sender.sendMessage(ChatColor.GREEN + "AntiVPN enabled.");
                 } else if (args[1].equalsIgnoreCase("off")) {
                     antiVpnEnabled = false;
                     getConfig().set("antivpn-enabled", false);
                     saveConfig();
-                    sender.sendMessage(ChatColor.YELLOW + "AntiVPN deshabilitado.");
+                    sender.sendMessage(ChatColor.YELLOW + "AntiVPN disabled.");
                 } else {
-                    sender.sendMessage(ChatColor.YELLOW + "Uso: /fireguard antivpn <on|off>");
+                    sender.sendMessage(ChatColor.YELLOW + "Usage: /fireguard antivpn <on|off>");
                 }
                 return true;
             } else if (args.length == 1 && args[0].equalsIgnoreCase("update")) {
                 if (!sender.hasPermission("fireguard.update")) {
-                    sender.sendMessage(ChatColor.RED + "No tienes permiso para usar este comando.");
+                    sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
                     return true;
                 }
-                sender.sendMessage(ChatColor.YELLOW + "Buscando actualizaciones de FireGuard...");
+                sender.sendMessage(ChatColor.YELLOW + "Checking for FireGuard updates...");
                 Bukkit.getScheduler().runTaskAsynchronously(Plugin.this, () -> {
                     checkForUpdate();
                 });
                 return true;
             }
-            sender.sendMessage(ChatColor.YELLOW + "Uso: /fireguard whitelist <ip> | /fireguard blacklist <jugador>");
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /fireguard whitelist <ip> | /fireguard blacklist <player> | /fireguard antivpn <on|off> | /fireguard update");
             return true;
         }
     }
@@ -150,7 +147,7 @@ public class Plugin extends JavaPlugin implements Listener {
                 if (o != null) whitelistIps.add(o.toString());
             }
         } catch (Exception e) {
-            LOGGER.warning("[FireGuard] No se pudo cargar la whitelist: " + e.getMessage());
+            LOGGER.warning("[FireGuard] Could not load whitelist: " + e.getMessage());
         }
     }
 
@@ -160,7 +157,7 @@ public class Plugin extends JavaPlugin implements Listener {
             arr.addAll(whitelistIps);
             writer.write(arr.toJSONString());
         } catch (Exception e) {
-            LOGGER.warning("[FireGuard] No se pudo guardar la whitelist: " + e.getMessage());
+            LOGGER.warning("[FireGuard] Could not save whitelist: " + e.getMessage());
         }
     }
 
@@ -184,7 +181,7 @@ public class Plugin extends JavaPlugin implements Listener {
             if (ips != null) for (Object o : ips) blacklistIps.add(o.toString());
             if (names != null) for (Object o : names) blacklistNames.add(o.toString());
         } catch (Exception e) {
-            LOGGER.warning("[FireGuard] No se pudo cargar la blacklist: " + e.getMessage());
+            LOGGER.warning("[FireGuard] Could not load blacklist: " + e.getMessage());
         }
     }
 
@@ -202,7 +199,7 @@ public class Plugin extends JavaPlugin implements Listener {
             json.put("names", names);
             writer.write(json.toJSONString());
         } catch (Exception e) {
-            LOGGER.warning("[FireGuard] No se pudo guardar la blacklist: " + e.getMessage());
+            LOGGER.warning("[FireGuard] Could not save blacklist: " + e.getMessage());
         }
     }
 
@@ -224,74 +221,66 @@ public class Plugin extends JavaPlugin implements Listener {
         long now = System.currentTimeMillis();
 
         if (ip == null) {
-            // No se pudo obtener la IP, no aplicar protección basada en IP
             return;
         }
-        // Detección de VPN/Proxy solo si está habilitado
         if (antiVpnEnabled) {
             Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
                 if (isVpnOrProxy(ip)) {
                     Bukkit.getScheduler().runTask(this, () -> {
-                        event.getPlayer().kickPlayer(ChatColor.RED + "Las VPNs y Proxys están bloqueadas en este servidor.");
+                        event.getPlayer().kickPlayer(ChatColor.RED + "VPNs and Proxies are blocked on this server.");
                     });
                 }
             });
         }
 
         if (whitelistIps.contains(ip)) {
-            return; // IP en lista blanca, no aplicar protección
+            return;
         }
-        // Blacklist por UUID
         if (blacklistUuids.contains(uuid)) {
             blockedIps.add(ip);
             ipBlockExpiry.put(ip, now + blockDurationSeconds * 1000);
-            event.getPlayer().kickPlayer(ChatColor.RED + "Estás en la blacklist de FireGuard.");
+            event.getPlayer().kickPlayer(ChatColor.RED + "You are blacklisted by FireGuard.");
             return;
         }
-        // Blacklist por IP
         if (blacklistIps.contains(ip)) {
             blockedIps.add(ip);
             ipBlockExpiry.put(ip, now + blockDurationSeconds * 1000);
-            event.getPlayer().kickPlayer(ChatColor.RED + "Tu IP está en la blacklist de FireGuard.");
+            event.getPlayer().kickPlayer(ChatColor.RED + "Your IP is blacklisted by FireGuard.");
             return;
         }
-        // Alerta por IP similar
         for (String blIp : blacklistIps) {
             if (isSimilarIp(ip, blIp)) {
-                alertAdmins("IP similar a blacklist detectada: " + ip + " ~ " + blIp + " (jugador: " + name + ")");
+                alertAdmins("IP similar to blacklist detected: " + ip + " ~ " + blIp + " (player: " + name + ")");
                 break;
             }
         }
-        // Alerta por nombre similar
         for (String blName : blacklistNames) {
             if (isSimilarName(name, blName)) {
-                alertAdmins("Nombre similar a blacklist detectado: " + name + " ~ " + blName + " (IP: " + ip + ")");
+                alertAdmins("Name similar to blacklist detected: " + name + " ~ " + blName + " (IP: " + ip + ")");
                 break;
             }
         }
 
-        // Limpiar bloqueos expirados
         if (ipBlockExpiry.containsKey(ip) && now > ipBlockExpiry.get(ip)) {
             blockedIps.remove(ip);
             ipBlockExpiry.remove(ip);
         }
 
         if (blockedIps.contains(ip)) {
-            event.getPlayer().kickPlayer(ChatColor.RED + "Conexiones desde tu IP han sido bloqueadas temporalmente por actividad sospechosa.");
+            event.getPlayer().kickPlayer(ChatColor.RED + "Connections from your IP have been temporarily blocked due to suspicious activity.");
             return;
         }
 
         ipJoinTimestamps.putIfAbsent(ip, new ArrayList<Long>());
         List<Long> timestamps = ipJoinTimestamps.get(ip);
         timestamps.add(now);
-        // Eliminar registros viejos (>1 minuto)
         timestamps.removeIf(ts -> now - ts > 60000);
 
         if (timestamps.size() > joinThreshold) {
             blockedIps.add(ip);
             ipBlockExpiry.put(ip, now + blockDurationSeconds * 1000);
-            alertAdmins("Conexiones masivas detectadas desde IP: " + ip + " (" + timestamps.size() + " en 1 minuto)");
-            event.getPlayer().kickPlayer(ChatColor.RED + "Conexiones desde tu IP han sido bloqueadas temporalmente por actividad sospechosa.");
+            alertAdmins("Massive connections detected from IP: " + ip + " (" + timestamps.size() + " in 1 minute)");
+            event.getPlayer().kickPlayer(ChatColor.RED + "Connections from your IP have been temporarily blocked due to suspicious activity.");
         }
     }
 
@@ -340,7 +329,7 @@ public class Plugin extends JavaPlugin implements Listener {
                 return (proxy != null && proxy) || (hosting != null && hosting);
             }
         } catch (IOException | ParseException e) {
-            LOGGER.warning("[FireGuard] Error comprobando VPN/Proxy: " + e.getMessage());
+            LOGGER.warning("[FireGuard] Error checking VPN/Proxy: " + e.getMessage());
             return false;
         }
     }
@@ -369,7 +358,7 @@ public class Plugin extends JavaPlugin implements Listener {
                         if (!latestVersion.equalsIgnoreCase(currentVersion)) {
                             JSONArray assets = (JSONArray) obj.get("assets");
                             if (assets != null && !assets.isEmpty()) {
-                                JSONObject asset = (JSONObject) assets.get(0); // Asume que el primer asset es el .jar
+                                JSONObject asset = (JSONObject) assets.get(0);
                                 String downloadUrl = (String) asset.get("browser_download_url");
                                 downloadAndReplacePlugin(downloadUrl, latestVersion);
                             }
@@ -378,7 +367,7 @@ public class Plugin extends JavaPlugin implements Listener {
                 }
                 con.disconnect();
             } catch (Exception e) {
-                LOGGER.warning("[FireGuard] Error comprobando actualizaciones: " + e.getMessage());
+                LOGGER.warning("[FireGuard] Error checking updates: " + e.getMessage());
             }
         });
     }
@@ -394,10 +383,10 @@ public class Plugin extends JavaPlugin implements Listener {
                     out.write(c);
                 }
             }
-            LOGGER.info("[FireGuard] Actualización descargada: " + latestVersion + ". Reinicia el servidor para aplicar la nueva versión.");
-            alertAdmins("Nueva versión de FireGuard descargada: " + latestVersion + ". Reinicia el servidor para actualizar.");
+            LOGGER.info("[FireGuard] Update downloaded: " + latestVersion + ". Restart the server to apply the new version.");
+            alertAdmins("New FireGuard version downloaded: " + latestVersion + ". Restart the server to update.");
         } catch (Exception e) {
-            LOGGER.warning("[FireGuard] Error descargando actualización: " + e.getMessage());
+            LOGGER.warning("[FireGuard] Error downloading update: " + e.getMessage());
         }
     }
 }
