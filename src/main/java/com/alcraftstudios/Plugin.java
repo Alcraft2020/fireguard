@@ -48,7 +48,7 @@ public class Plugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        LOGGER.info("FireGuard successfully enabled.");
+        LOGGER.info("FireGuard successfully enabled. Thanks for using FireGuard!");
         getServer().getPluginManager().registerEvents(this, this);
         saveDefaultConfig();
         joinThreshold = getConfig().getInt("join-threshold", 5);
