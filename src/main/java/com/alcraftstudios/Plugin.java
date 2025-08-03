@@ -43,7 +43,7 @@ public class Plugin extends JavaPlugin implements Listener {
     private int blockDurationSeconds = 60; // duración del bloqueo
     private final Map<String, Long> ipBlockExpiry = new HashMap<>();
     private boolean antiVpnEnabled = true;
-    private final String githubApiUrl = "https://api.github.com/repos/<TU_USUARIO>/<TU_REPO>/releases/latest"; // Reemplaza <TU_USUARIO> y <TU_REPO>
+    private final String githubApiUrl = "https://api.github.com/repos/Alcraft2020/firegurad/releases/latest"; // Reemplaza <TU_USUARIO> y <TU_REPO>
     private final String pluginJarName = "fireguard-0.1.jar"; // Cambia si tu .jar tiene otro nombre
 
     @Override
