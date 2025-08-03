@@ -119,6 +119,16 @@ public class Plugin extends JavaPlugin implements Listener {
                     sender.sendMessage(ChatColor.YELLOW + "Uso: /fireguard antivpn <on|off>");
                 }
                 return true;
+            } else if (args.length == 1 && args[0].equalsIgnoreCase("update")) {
+                if (!sender.hasPermission("fireguard.update")) {
+                    sender.sendMessage(ChatColor.RED + "No tienes permiso para usar este comando.");
+                    return true;
+                }
+                sender.sendMessage(ChatColor.YELLOW + "Buscando actualizaciones de FireGuard...");
+                Bukkit.getScheduler().runTaskAsynchronously(Plugin.this, () -> {
+                    checkForUpdate();
+                });
+                return true;
             }
             sender.sendMessage(ChatColor.YELLOW + "Uso: /fireguard whitelist <ip> | /fireguard blacklist <jugador>");
             return true;

@@ -26,6 +26,10 @@ commands:
         description: Habilita o deshabilita el AntiVPN
         usage: /fireguard antivpn <on|off>
         permission: fireguard.antivpn
+      update:
+        description: Busca y descarga la última versión del plugin FireGuard
+        usage: /fireguard update
+        permission: fireguard.update
 permissions:
   fireguard.use:
     description: Permite usar el comando /fireguard
@@ -38,6 +42,9 @@ permissions:
     default: op
   fireguard.antivpn:
     description: Permite habilitar o deshabilitar el AntiVPN
+    default: op
+  fireguard.update:
+    description: Permite actualizar el plugin FireGuard
     default: op
   fireguard.alert:
     description: Recibe alertas de FireGuard
