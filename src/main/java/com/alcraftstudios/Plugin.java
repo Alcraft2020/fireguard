@@ -43,8 +43,6 @@ public class Plugin extends JavaPlugin implements Listener {
     private int blockDurationSeconds = 60;
     private final Map<String, Long> ipBlockExpiry = new HashMap<>();
     private boolean antiVpnEnabled = true;
-    private final String githubApiUrl = "https://api.github.com/repos/Alcraft2020/fireguard/releases/latest";
-    private final String pluginJarName = "fireguard-0.1.jar";
 
     @Override
     public void onEnable() {
@@ -59,7 +57,6 @@ public class Plugin extends JavaPlugin implements Listener {
         loadWhitelist();
         loadBlacklist();
         getCommand("fireguard").setExecutor(new FireGuardCommandExecutor());
-        checkForUpdate();
     }
 
     private class FireGuardCommandExecutor implements org.bukkit.command.CommandExecutor {
@@ -116,18 +113,8 @@ public class Plugin extends JavaPlugin implements Listener {
                     sender.sendMessage(ChatColor.YELLOW + "Usage: /fireguard antivpn <on|off>");
                 }
                 return true;
-            } else if (args.length == 1 && args[0].equalsIgnoreCase("update")) {
-                if (!sender.hasPermission("fireguard.update")) {
-                    sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
-                    return true;
-                }
-                sender.sendMessage(ChatColor.YELLOW + "Checking for FireGuard updates...");
-                Bukkit.getScheduler().runTaskAsynchronously(Plugin.this, () -> {
-                    checkForUpdate();
-                });
-                return true;
             }
-            sender.sendMessage(ChatColor.YELLOW + "Usage: /fireguard whitelist <ip> | /fireguard blacklist <player> | /fireguard antivpn <on|off> | /fireguard update");
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /fireguard whitelist <ip> | /fireguard blacklist <player> | /fireguard antivpn <on|off>");
             return true;
         }
     }
@@ -331,62 +318,6 @@ public class Plugin extends JavaPlugin implements Listener {
         } catch (IOException | ParseException e) {
             LOGGER.warning("[FireGuard] Error checking VPN/Proxy: " + e.getMessage());
             return false;
-        }
-    }
-
-    private void checkForUpdate() {
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            try {
-                URL url = new URL(githubApiUrl);
-                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                con.setRequestProperty("Accept", "application/vnd.github.v3+json");
-                con.setConnectTimeout(5000);
-                con.setReadTimeout(5000);
-                con.setRequestMethod("GET");
-                int status = con.getResponseCode();
-                if (status == 200) {
-                    try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()))) {
-                        StringBuilder content = new StringBuilder();
-                        String inputLine;
-                        while ((inputLine = in.readLine()) != null) {
-                            content.append(inputLine);
-                        }
-                        JSONParser parser = new JSONParser();
-                        JSONObject obj = (JSONObject) parser.parse(content.toString());
-                        String latestVersion = (String) obj.get("tag_name");
-                        String currentVersion = getDescription().getVersion();
-                        if (!latestVersion.equalsIgnoreCase(currentVersion)) {
-                            JSONArray assets = (JSONArray) obj.get("assets");
-                            if (assets != null && !assets.isEmpty()) {
-                                JSONObject asset = (JSONObject) assets.get(0);
-                                String downloadUrl = (String) asset.get("browser_download_url");
-                                downloadAndReplacePlugin(downloadUrl, latestVersion);
-                            }
-                        }
-                    }
-                }
-                con.disconnect();
-            } catch (Exception e) {
-                LOGGER.warning("[FireGuard] Error checking updates: " + e.getMessage());
-            }
-        });
-    }
-
-    private void downloadAndReplacePlugin(String downloadUrl, String latestVersion) {
-        try {
-            File pluginFile = new File(getFile().getParent(), pluginJarName);
-            URL url = new URL(downloadUrl);
-            try (InputStreamReader in = new InputStreamReader(url.openStream());
-                 FileWriter out = new FileWriter(pluginFile)) {
-                int c;
-                while ((c = in.read()) != -1) {
-                    out.write(c);
-                }
-            }
-            LOGGER.info("[FireGuard] Update downloaded: " + latestVersion + ". Restart the server to apply the new version.");
-            alertAdmins("New FireGuard version downloaded: " + latestVersion + ". Restart the server to update.");
-        } catch (Exception e) {
-            LOGGER.warning("[FireGuard] Error downloading update: " + e.getMessage());
         }
     }
 }
