@@ -1,5 +1,6 @@
 package com.alcraftstudios;
 
+import fi.iki.elonen.NanoHTTPD;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -8,6 +9,8 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.SecureRandom;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +46,9 @@ public class Plugin extends JavaPlugin implements Listener {
     private int blockDurationSeconds = 60;
     private final Map<String, Long> ipBlockExpiry = new HashMap<>();
     private boolean antiVpnEnabled = true;
+    private String apiToken;
+    private boolean dashboardLinked = false;
+    private FireGuardHttpServer httpServer;
 
     @Override
     public void onEnable() {
@@ -56,13 +62,57 @@ public class Plugin extends JavaPlugin implements Listener {
         blacklistFile = new File(getDataFolder(), "blacklist.json");
         loadWhitelist();
         loadBlacklist();
+        loadOrGenerateApiToken();
+        startHttpServer();
         getCommand("fireguard").setExecutor(new FireGuardCommandExecutor());
+    }
+
+    private void loadOrGenerateApiToken() {
+        File tokenFile = new File(getDataFolder(), "apitoken.txt");
+        if (tokenFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(tokenFile))) {
+                apiToken = reader.readLine();
+            } catch (IOException e) {
+                LOGGER.warning("[FireGuard] Could not read API token: " + e.getMessage());
+            }
+        } else {
+            apiToken = new BigInteger(130, new SecureRandom()).toString(32);
+            try {
+                getDataFolder().mkdirs();
+                try (FileWriter writer = new FileWriter(tokenFile)) {
+                    writer.write(apiToken);
+                }
+            } catch (IOException e) {
+                LOGGER.warning("[FireGuard] Could not save API token: " + e.getMessage());
+            }
+        }
+    }
+
+    private void startHttpServer() {
+        try {
+            httpServer = new FireGuardHttpServer(8081);
+            httpServer.start(5000); // 5000 ms is the default SOCKET_READ_TIMEOUT in NanoHTTPD
+            LOGGER.info("[FireGuard] HTTP API started on port 8081");
+        } catch (IOException e) {
+            LOGGER.warning("[FireGuard] Could not start HTTP API: " + e.getMessage());
+        }
     }
 
     private class FireGuardCommandExecutor implements org.bukkit.command.CommandExecutor {
         @Override
         public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
-            if (args.length == 2 && args[0].equalsIgnoreCase("whitelist")) {
+            if (args.length == 1 && args[0].equalsIgnoreCase("link")) {
+                if (dashboardLinked) {
+                    sender.sendMessage(ChatColor.GREEN + "FireGuard is linked to the dashboard!");
+                } else {
+                    sender.sendMessage(ChatColor.YELLOW + "FireGuard is not linked to the dashboard.");
+                    sender.sendMessage(ChatColor.AQUA + "Step 1: Open your dashboard webpage.");
+                    sender.sendMessage(ChatColor.AQUA + "Step 2: Enter the following token: " + ChatColor.GOLD + apiToken);
+                    sender.sendMessage(ChatColor.AQUA + "Step 3: Enter the Minecraft server IP and port 8081 in the dashboard settings.");
+                    sender.sendMessage(ChatColor.AQUA + "Step 4: The dashboard will connect and show alerts and controls.");
+                }
+                return true;
+            } else if (args.length == 2 && args[0].equalsIgnoreCase("whitelist")) {
                 String ip = args[1];
                 if (sender.hasPermission("fireguard.whitelist") || !(sender instanceof Player)) {
                     whitelistIps.add(ip);
@@ -318,6 +368,26 @@ public class Plugin extends JavaPlugin implements Listener {
         } catch (IOException | ParseException e) {
             LOGGER.warning("[FireGuard] Error checking VPN/Proxy: " + e.getMessage());
             return false;
+        }
+    }
+
+    private class FireGuardHttpServer extends NanoHTTPD {
+        public FireGuardHttpServer(int port) {
+            super(port);
+        }
+        @Override
+        public Response serve(IHTTPSession session) {
+            String token = session.getParms().get("token");
+            if (token == null || !token.equals(apiToken)) {
+                return newFixedLengthResponse(Response.Status.UNAUTHORIZED, "text/plain", "Invalid or missing token");
+            }
+            String uri = session.getUri();
+            if (uri.equals("/status")) {
+                dashboardLinked = true;
+                return newFixedLengthResponse("{\"status\":\"ok\"}");
+            }
+            // Add more endpoints here for alerts, blacklist, whitelist, etc.
+            return newFixedLengthResponse("{\"error\":\"Unknown endpoint\"}");
         }
     }
 }

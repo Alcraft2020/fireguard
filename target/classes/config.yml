@@ -1,3 +1,0 @@
-# Configuración de FireGuard
-join-threshold: 5  # Conexiones máximas por minuto antes de bloquear una IP
-block-duration-seconds: 60  # Duración del bloqueo temporal en segundos
