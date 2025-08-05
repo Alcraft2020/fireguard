@@ -1,0 +1,51 @@
+name: fireguard
+main: com.alcraftstudios.Plugin
+version: 0.1
+api-version: 1.15
+commands:
+  fireguard:
+    description: Comando principal de FireGuard
+    usage: |
+      /fireguard whitelist <ip>
+      /fireguard blacklist <jugador>
+      /fireguard antivpn <on|off>
+    permission: fireguard.use
+    permission-message: No tienes permiso para usar este comando.
+    aliases:
+      - fg
+    subcommands:
+      whitelist:
+        description: Añade una IP a la whitelist
+        usage: /fireguard whitelist <ip>
+        permission: fireguard.whitelist
+      blacklist:
+        description: Añade un jugador a la blacklist
+        usage: /fireguard blacklist <jugador>
+        permission: fireguard.blacklist
+      antivpn:
+        description: Habilita o deshabilita el AntiVPN
+        usage: /fireguard antivpn <on|off>
+        permission: fireguard.antivpn
+      update:
+        description: Busca y descarga la última versión del plugin FireGuard
+        usage: /fireguard update
+        permission: fireguard.update
+permissions:
+  fireguard.use:
+    description: Permite usar el comando /fireguard
+    default: op
+  fireguard.whitelist:
+    description: Permite añadir IPs a la whitelist
+    default: op
+  fireguard.blacklist:
+    description: Permite añadir jugadores a la blacklist
+    default: op
+  fireguard.antivpn:
+    description: Permite habilitar o deshabilitar el AntiVPN
+    default: op
+  fireguard.update:
+    description: Permite actualizar el plugin FireGuard
+    default: op
+  fireguard.alert:
+    description: Recibe alertas de FireGuard
+    default: op

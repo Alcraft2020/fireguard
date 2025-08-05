@@ -49,6 +49,7 @@ public class Plugin extends JavaPlugin implements Listener {
     private String apiToken;
     private boolean dashboardLinked = false;
     private FireGuardHttpServer httpServer;
+    private int apiPort = 8081;
 
     @Override
     public void onEnable() {
@@ -58,6 +59,7 @@ public class Plugin extends JavaPlugin implements Listener {
         joinThreshold = getConfig().getInt("join-threshold", 5);
         blockDurationSeconds = getConfig().getInt("block-duration-seconds", 60);
         antiVpnEnabled = getConfig().getBoolean("antivpn-enabled", true);
+        apiPort = getConfig().getInt("api-port", 8081);
         whitelistFile = new File(getDataFolder(), "whitelist.json");
         blacklistFile = new File(getDataFolder(), "blacklist.json");
         loadWhitelist();
@@ -90,9 +92,9 @@ public class Plugin extends JavaPlugin implements Listener {
 
     private void startHttpServer() {
         try {
-            httpServer = new FireGuardHttpServer(8081);
+            httpServer = new FireGuardHttpServer(apiPort);
             httpServer.start(5000); // 5000 ms is the default SOCKET_READ_TIMEOUT in NanoHTTPD
-            LOGGER.info("[FireGuard] HTTP API started on port 8081");
+            LOGGER.info("[FireGuard] HTTP API started on port " + apiPort);
         } catch (IOException e) {
             LOGGER.warning("[FireGuard] Could not start HTTP API: " + e.getMessage());
         }
@@ -108,7 +110,7 @@ public class Plugin extends JavaPlugin implements Listener {
                     sender.sendMessage(ChatColor.YELLOW + "FireGuard is not linked to the dashboard.");
                     sender.sendMessage(ChatColor.AQUA + "Step 1: Open your dashboard webpage.");
                     sender.sendMessage(ChatColor.AQUA + "Step 2: Enter the following token: " + ChatColor.GOLD + apiToken);
-                    sender.sendMessage(ChatColor.AQUA + "Step 3: Enter the Minecraft server IP and port 8081 in the dashboard settings.");
+                    sender.sendMessage(ChatColor.AQUA + "Step 3: Enter the Minecraft server IP and port " + apiPort + " en la configuración del dashboard.");
                     sender.sendMessage(ChatColor.AQUA + "Step 4: The dashboard will connect and show alerts and controls.");
                 }
                 return true;
